@@ -3,7 +3,7 @@ import random
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QLabel
 from PyQt5.QtGui import QFont
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from pygame import mixer
 
 class SteelPlayer(QWidget):
@@ -18,23 +18,30 @@ class SteelPlayer(QWidget):
 
         mixer.init()
         self.load_playlist()
+        self.play_next()  # start playing a random track when playlist is loaded
+
+        # Set up a timer to check if the music has stopped
+        self.timer = QTimer(self)
+        self.timer.setInterval(1000)  # Check every second
+        self.timer.timeout.connect(self.check_music)
+        self.timer.start()
 
     def initUI(self):
-        # Main Layout
+        # main layout
         self.main_layout = QVBoxLayout()
         self.setLayout(self.main_layout)
 
-        # Track Info
-        self.track_info = QLabel("No track playing", self)
+        # track info
+        self.track_info = QLabel("no track playing", self)
         self.track_info.setAlignment(Qt.AlignCenter)
         self.track_info.setFont(QFont('Arial', 14))
         self.main_layout.addWidget(self.track_info)
 
-        # Controls Layout
+        # controls layout
         self.controls_layout = QHBoxLayout()
         self.main_layout.addLayout(self.controls_layout)
 
-        # Control Buttons
+        # control buttons
         self.prev_button = QPushButton(self)
         self.prev_button.setText("<")
         self.prev_button.setFixedSize(60, 60)
@@ -42,7 +49,7 @@ class SteelPlayer(QWidget):
         self.controls_layout.addWidget(self.prev_button)
 
         self.play_pause_button = QPushButton(self)
-        self.play_pause_button.setText("Pause")
+        self.play_pause_button.setText("pause")
         self.play_pause_button.setFixedSize(60, 60)
         self.play_pause_button.clicked.connect(self.toggle_play_pause)
         self.controls_layout.addWidget(self.play_pause_button)
@@ -53,7 +60,7 @@ class SteelPlayer(QWidget):
         self.next_button.clicked.connect(self.play_next)
         self.controls_layout.addWidget(self.next_button)
 
-        # Window settings
+        # window settings
         self.setWindowTitle('steel player (VERY COOL AWESOME!!)')
         self.setGeometry(300, 300, 250, 100)
         self.show()
@@ -63,8 +70,6 @@ class SteelPlayer(QWidget):
         if not self.playlist:
             self.track_info.setText("no audio is in this folder :(")
             return
-
-        self.play_next()  # Start playing a random track when playlist is loaded
 
     def play_audio(self, file_to_play):
         mixer.music.load(file_to_play)
@@ -114,6 +119,10 @@ class SteelPlayer(QWidget):
 
         file_to_play = self.playlist[next_index]
         self.play_audio(file_to_play)
+
+    def check_music(self):
+        if not mixer.music.get_busy() and self.is_playing:
+            self.play_next()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
